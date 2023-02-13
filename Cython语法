@@ -1,0 +1,149 @@
+# 如何定义指针变量 引用和解引用
+cdef double a
+cdef double *b = NULL
+cdef double *c, *d
+
+# 解引用
+cdef int a = 10
+cdef int *p = &a
+x = p[0]
+print(x)
+
+# cdef定义得函数不能被外部调用
+# def作为桥梁 python可以调用 def定义得函数
+# 利用def包装装饰cdef得函数 cdef又是C得函数
+
+# 声明并使用结构体，共同体，枚举
+# C:
+struct mycpx{
+    float a;
+    float b;
+}
+union uu{
+    int a;
+    short b, c;
+}
+=============================
+# Cython:
+cdef struct mycpx:
+    float real
+    float imag
+
+cdef union uu:
+    int a
+    short b, c
+
+# 创建
+cdef mycpx zz
+cdef mycpx a = mycpx(1,2)
+cdef mycpx b = mycpx(real=1,imag=2)
+cdef mycpx c
+c.real = 1
+c.imag = 2
+
+# 结构体嵌套
+# C:
+struct girl{
+    char *where;
+    struct _info{
+        char *name;
+        int age;
+        char *gender;
+    } info;
+};
+# Cython:
+ctypedef struct _info:
+    char *name
+    int age;
+    char *gender
+
+ctypedef struct girl:
+    char *where
+    _info info  # 创建一个info成员，类型是_info
+
+# 初始化
+cdef girl g = girl(where="sou", info=_info("suxiao",12,"female"))
+print(g.where)
+print(g.info.name)
+print(g.info.age)
+print(g.info.gender)
+
+# 枚举
+cdef enum my_enum1:
+    RED = 1
+    YELLOW = 3
+    GREEN = 5
+
+cdef enum my_enum2:
+    PURPLE, BROWN
+
+# 使用ctypedef 给类型起别名
+ctypedef list LIST
+
+def f(LIST v):
+    print(v)
+
+
+# python面向对象
+cdef class A:
+    cdef:
+        unsigned int n
+        double *array
+
+    def __cinit__(self, n):
+        self.n = n
+        # 在C一级进行动态分配内存
+        self.array = <double *>malloc(n * sizeof(double))
+        if self.array == NULL:
+            raise MemoryError()
+
+    def __dealloc__(self):
+        if self.array != NULL:
+            free(self.array)
+
+    def __init__(self, n):
+        pass
+# cint 和 init 函数的区别：
+# ①它们只能通过def来定义。
+# ②涉及到malloc，动态分配内存只能在cinit中进行。
+# ③cinit会在init之前调用。
+# 实例化扩展类的时候，参数会先传递给cinit，然后cinit再将接受到的参数原封不到的传递给init
+
+# 包装C文件，例如：
+# header.h
+
+# define M_pi 3.14
+# define Max(a,b) ((a) >= (b) ? (a) : (b))
+double hypot(double, double);
+typedef int integral;
+typedef double real;
+void func(integral,integral,real);
+real *func_arrays(integral[],integral[][10],real **);
+
+# moule.pyx
+
+cdef extern from "header.h":
+    double M_pi
+    float MAX(float a, float b)
+    double hypot(double x, double y)
+    ctypedef int integral
+    ctypedef double real
+    void func(integral a, integral b,real c)
+    real *func_arrays(integral[] i, integral[][10] j, real **k)
+
+
+# 引入源文件.c
+int func(int a, int b){
+    return a+b;
+}
+
+# Cython
+cdef extern from "source.c":
+    int func(int a, int b)
+
+def py_func(int a, int b):
+    return func(a, b)
+# 先用extern 从c调出函数func，用def包装C函数func 成python能调用的函数py_func
+
+
+
