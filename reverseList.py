@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Union, Callable
 
 
 class ListNode:
@@ -8,7 +8,7 @@ class ListNode:
 
 
 class Solution:
-    def reverseList(self, head: Optional[ListNode]) -> Optional[ListNode]:
+    def reverseList(self, head: Optional[ListNode]) -> Optional[ListNode]:  # head : ListNode = None
         if not head or not head.next: return head
         p = self.reverseList(head.next)  # p 3  head 保存留到下一个递归
         head.next.next = head  # 2 的 next的next ==  3的next  指向了2节点 得到反转
@@ -40,6 +40,20 @@ class LinkList:
             node = node.next
 
 
+def add(a: int, b: int) -> int:
+    return a + b
+
+
+def process(fn: Union[str, Callable]):
+    if isinstance(fn, str):
+        # str2fn and process
+
+        print(fn)
+        pass
+    elif isinstance(fn, Callable):
+        fn()
+
+
 if __name__ == '__main__':
     l = LinkList()
     data1 = [1, 2, 3]
@@ -53,6 +67,9 @@ if __name__ == '__main__':
 
     l.printlist(p1)
 
-
-
-
+    # a = 1
+    # b = 2
+    # add_ = add(a, b)
+    #
+    # print(process(add))
+    # process("Union用法")
